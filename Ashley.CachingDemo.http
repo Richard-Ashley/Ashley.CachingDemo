@@ -1,0 +1,6 @@
+@Ashley.CachingDemo_HostAddress = http://localhost:5211
+
+GET {{Ashley.CachingDemo_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
