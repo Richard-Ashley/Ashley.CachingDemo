@@ -27,8 +27,6 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddOutputCache(options =>
 {
-    options.AddBasePolicy(policy => policy.Expire(TimeSpan.FromMinutes(5)));
-
     options.AddPolicy("ProductsPolicy", policy => policy
         .Expire(TimeSpan.FromMinutes(5))
         .SetVaryByRouteValue("id")

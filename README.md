@@ -26,15 +26,17 @@ Plus an **uncached baseline** so the comparison is honest.
 
 ## Benchmark numbers
 
-Measured on localhost. Each number is a single HTTP call against a warm cache, so expect a few ms of jitter.
+Measured on localhost with Redis in Docker. Each figure is the range seen across six runs of `/api/benchmark`, after the first (warm-up) run. Every run is a single HTTP call per strategy, so expect a few ms of jitter.
 
 | Strategy | Latency (warm hit) | Speedup vs baseline |
 |---|---|---|
-| Uncached baseline | ~510 ms | 1x |
-| IMemoryCache | ~4 ms | ~128x |
-| Output caching | ~3-4 ms | ~130x |
-| IDistributedCache (Redis) | _to be measured_ | |
-| Cache-aside (raw Redis) | _to be measured_ | |
+| Uncached baseline | ~500 ms | 1x |
+| IMemoryCache | ~1-2 ms | ~250-500x |
+| Output caching | ~1-3 ms | ~170-500x |
+| IDistributedCache (Redis) | ~2-4 ms | ~125-250x |
+| Cache-aside (raw Redis) | ~2-5 ms | ~100-250x |
+
+The ordering is the useful part: in-process strategies are fastest, and the Redis-backed ones pay a small network and serialization cost per hit. The exact milliseconds will differ on your machine.
 
 Run the benchmark yourself:
 
