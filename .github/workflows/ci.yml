@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-smoke:
+    name: Build and smoke-test
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 3s
+          --health-retries 3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Start API in background
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ASPNETCORE_URLS: http://localhost:5211
+        run: |
+          dotnet run --no-build --configuration Release --project Ashley.CachingDemo.csproj > api.log 2>&1 &
+          echo "API_PID=$!" >> "$GITHUB_ENV"
+
+      - name: Wait for API to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:5211/swagger/v1/swagger.json > /dev/null; then
+              echo "API is up after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API did not start in 30s"
+          cat api.log
+          exit 1
+
+      - name: Smoke-test benchmark endpoint
+        run: |
+          STATUS=$(curl -s -o response.json -w "%{http_code}" http://localhost:5211/api/benchmark)
+          echo "HTTP status: $STATUS"
+          echo "Response body:"
+          cat response.json
+          echo
+          if [ "$STATUS" != "200" ]; then
+            echo "Benchmark endpoint failed"
+            cat api.log
+            exit 1
+          fi
+          grep -q '"cacheAside"' response.json
+
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -n "$API_PID" ]; then
+            kill "$API_PID" 2>/dev/null || true
+          fi
+
+      - name: Upload API log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-log
+          path: api.log
+          retention-days: 7

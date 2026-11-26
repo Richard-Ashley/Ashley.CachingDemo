@@ -2,6 +2,7 @@
 
 > Four .NET 10 caching strategies compared side-by-side with live benchmarks.
 
+[![CI](https://github.com/Richard-Ashley/Ashley.CachingDemo/actions/workflows/ci.yml/badge.svg)](https://github.com/Richard-Ashley/Ashley.CachingDemo/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-10.0-purple)](https://dotnet.microsoft.com/)
 
@@ -25,6 +26,8 @@ Plus an **uncached baseline** so the comparison is honest.
 ---
 
 ## Benchmark numbers
+
+The 500 ms baseline is simulated with `Task.Delay`, so the speedup ratios below are a function of that simulated latency. Against a faster real backing store they would be proportionally smaller; the ordering between strategies is the transferable part.
 
 Measured on localhost with Redis in Docker. Each figure is the range seen across six runs of `/api/benchmark`, after the first (warm-up) run. Every run is a single HTTP call per strategy, so expect a few ms of jitter.
 
